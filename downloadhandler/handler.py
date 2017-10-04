@@ -1,12 +1,15 @@
 #!/usr/bin/env python2
 
-from listutil import first
-from pathutil import is_video_file, locate_file_by_name, folder_emblems
 from guessit import guessit
-from download import Download
 from pathlib2 import Path
 from imdb import IMDb
-from subdl import subdl
+
+from .listutil import first
+from .pathutil import is_video_file, locate_file_by_name, folder_emblems
+
+from download import Download
+from .subdl import subdl
+
 
 def single_video(download):
     biggest_file_paths = first(download.group_files_by_size())
@@ -20,7 +23,7 @@ def single_video(download):
 class EpisodeHandler:
 
     def __init__(self):
-        self._tv_series_folder_path = Path("./tests4")
+        self._tv_series_folder_path = Path.home() / Path("Personal/Media/Videos/TV Series")
 
     def can_handle(self, download):
         video_file_path = single_video(download)
@@ -54,7 +57,7 @@ class EpisodeHandler:
         episode_file_name = download.biggest_file.name
         target_folder_path = self._make_target_folder(episode_file_name)
         folder_emblems(target_folder_path).set_emblem("new")
-        download.copy_files(target_folder_path)
+        download.copy_to(target_folder_path)
         self._download_subtitles(target_folder_path, episode_file_name)
 
 
@@ -65,18 +68,39 @@ class EpisodeHandler:
 class MovieHandler:
 
     def __init__(self):
-        self.name = 'episode'
+        self._movie_folder_path = Path.home() / Path("Personal/Media/Videos/Movies")
 
     def can_handle(self, download):
         video_file_path = single_video(download)
         if video_file_path:
             video_file_name = video_file_path.name
             guess = guessit(video_file_name)
-            return guess["type"] == "movie" # If it's an episode
+            return guess["type"] == "movie" # If it's a movie
         return False
 
+    def _download_subtitles(self, folder_path, movie_file_name):
+        movie_file_path = locate_file_by_name(folder_path, movie_file_name)
+        subdl(folder_path / movie_file_path)
+
+    def _make_target_folder(self, movide_file_name):
+        guess = guessit(movide_file_name)
+        title = guess["title"]
+
+        imdb = IMDb()
+        movie = first(filter(lambda movie: movie["kind"] == "movie", imdb.search_movie(title)))
+        year = movie["year"]
+
+        target_folder_path = self._movie_folder_path / Path("%s [%s]" % (title, year))
+        target_folder_path.mkdir(exist_ok=True, parents=True)
+
+        return target_folder_path
+
     def handle(self, download):
-        pass
+        movie_file_name = download.biggest_file.name
+        target_folder_path = self._make_target_folder(movie_file_name)
+        folder_emblems(target_folder_path).set_emblem("new")
+        download.copy_to(target_folder_path)
+        self._download_subtitles(target_folder_path, movie_file_name)
 
     def __repr__(self):
         return "MovieHandler"

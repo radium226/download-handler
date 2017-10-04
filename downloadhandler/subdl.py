@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 
 from pathlib2 import Path
-from subprocessutil import execute
+
+from .subprocessutil import execute
 
 def subdl(video_file_path):
     command = [

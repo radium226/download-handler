@@ -5,8 +5,9 @@ import os
 from pathlib2 import Path
 import mimetypes
 
-from listutil import first
-from subprocessutil import execute
+from .listutil import first
+from .subprocessutil import execute
+
 
 class FolderEmblems:
 
@@ -32,8 +33,22 @@ class FolderEmblems:
              "metadata::emblems"
         ])
 
+
+def delete_file(file_path, trash=True):
+    if trash:
+        execute(["gio", "trash", str(file_path)])
+    else:
+        pass
+
+def delete_folder(folder_path, trash=True):
+    if trash:
+        execute(["gio", "trash", str(folder_path)])
+    else:
+        pass
+
 def folder_emblems(folder_path):
     return FolderEmblems(folder_path)
+
 
 def file_mime_type(file_path):
     mime_type, _ = mimetypes.guess_type(str(file_path))
@@ -70,11 +85,13 @@ def list_folders(folder_path, recursive=True, absolute=False):
         sub_folder_paths
     )
 
+
 def locate_file_by_name(folder_path, file_name, absolute=False):
     return first(filter(
         lambda file_path: file_path.name == file_name,
         list_files(folder_path, absolute=absolute, recursive=True)
     ))
+
 
 def list_files(folder_path, recursive=True, absolute=False):
     file_paths = []

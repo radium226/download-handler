@@ -1,21 +1,28 @@
 #!/usr/bin/env python2
 
-from pathutil import list_files, list_folders, first_non_empty_folder, copy_folder, copy_file
 import shutil
 import numpy as np
 from pathlib2 import Path
-from listutil import first
+
+from .pathutil import delete_file, delete_folder, list_files, list_folders, first_non_empty_folder, copy_folder, copy_file
+from .listutil import first
 
 class Download:
 
     def __init__(self, file_or_folder_path):
         self._file_or_folder_path = file_or_folder_path
 
+    def delete(self, trash=True):
+        if self._file_or_folder_path.is_dir():
+            delete_folder(self._file_or_folder_path, trash=trash)
+        else:
+            delete_file(self._file_or_folder_path, trash=trash)
+
     @property
     def biggest_file(self):
         return first(first(self.group_files_by_size()))
 
-    def copy_files(self, target_folder_path):
+    def copy_to(self, target_folder_path):
         if self._file_or_folder_path.is_dir():
             folder_path = self._file_or_folder_path
             origin_folder_path = folder_path / first_non_empty_folder(folder_path)
