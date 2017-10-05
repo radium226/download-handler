@@ -3,10 +3,20 @@
 from downloadhandler import HandlerFinder
 from downloadhandler import Download
 from pathlib2 import Path
+import os
 import sys
+import json
 
 if __name__ == "__main__":
-    file_or_folder_path = Path(sys.argv[1])
+    #debug_file_path = Path.home() / Path("Downloads/environ.json")
+    #with debug_file_path.open(mode="w") as debug_file:
+    #    debug_file.write(unicode(json.dumps(dict(os.environ), ensure_ascii=False)))
+
+    try:
+        file_or_folder_path = Path(sys.argv[1])
+    except:
+        file_or_folder_path = Path(os.environ["TR_TORRENT_DIR"]) / Path(os.environ["TR_TORRENT_NAME"])
+
     download = Download(file_or_folder_path)
     handler = HandlerFinder().find_handler(download)
     handler.handle(download)
