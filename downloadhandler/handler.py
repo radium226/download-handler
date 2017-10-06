@@ -152,6 +152,11 @@ class AlbumHandler:
         return "AlbumHandler"
 
 
+class UnknownHandlerError(Exception):
+    def __init__(self):
+        super(BeetImportError, self).__init__()
+
+
 class UnknownHandler:
 
     def __init__(self):
@@ -161,7 +166,7 @@ class UnknownHandler:
         return True
 
     def handle(self, download):
-        pass
+        raise UnknownHandlerError()
 
     def __repr__(self):
         return "UnknownHandler"
