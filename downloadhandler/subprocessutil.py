@@ -3,9 +3,10 @@
 import subprocess
 import sys
 
-def execute(command, cwd=None):
-    process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
+def execute(command, in_folder=None, return_decider=lambda exit_code, output: exit_code == 0):
+    process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=in_folder)
 
+    lines = []
     # Poll process for new output until finished
     while True:
         next_line = process.stdout.readline()
@@ -13,11 +14,9 @@ def execute(command, cwd=None):
             break
         sys.stdout.write(next_line)
         sys.stdout.flush()
+        lines.append(next_line)
 
     output = process.communicate()[0]
     exit_code = process.returncode
 
-    if (exit_code == 0):
-        return True
-    else:
-        return False
+    return return_decider(exit_code, lines)

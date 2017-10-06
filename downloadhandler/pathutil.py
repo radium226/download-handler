@@ -62,6 +62,9 @@ def is_video_file(file_path):
     primary_mime_type, _ = file_mime_type(file_path)
     return primary_mime_type == "video"
 
+def is_audio_file(file_path):
+    primary_mime_type, _ = file_mime_type(file_path)
+    return primary_mime_type == "audio"
 
 def list_folders(folder_path, recursive=True, absolute=False):
     if recursive:

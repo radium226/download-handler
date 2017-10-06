@@ -3,13 +3,15 @@
 from guessit import guessit
 from pathlib2 import Path
 from imdb import IMDb
+from tempfile import mkdtemp
+from pyunpack import Archive
 
 from .listutil import first
-from .pathutil import is_video_file, locate_file_by_name, folder_emblems
+from .pathutil import file_mime_type, is_video_file, is_audio_file, locate_file_by_name, folder_emblems
 
-from download import Download
+from .download import Download
 from .subdl import subdl
-
+from .beet import beet_import
 
 def single_video(download):
     biggest_file_paths = first(download.group_files_by_size())
@@ -106,6 +108,50 @@ class MovieHandler:
         return "MovieHandler"
 
 
+class ArchiveHandler:
+
+    def __init__(self):
+        pass
+
+    def can_handle(self, download):
+        if download.file_count == 1:
+            file_path = download.biggest_file
+            _, secondary_mime_type = file_mime_type(file_path)
+            if secondary_mime_type == "x-rar-compressed":
+                return True
+        return False
+
+    def handle(self, download):
+        archive_file_path = download.biggest_file
+        temp_folder_path = Path(mkdtemp(prefix=archive_file_path.name, dir=str(archive_file_path.parent)))
+        Archive(str(archive_file_path)).extractall(str(temp_folder_path))
+        fake_download = Download(temp_folder_path)
+        handler = HandlerFinder().find_handler(fake_download)
+        handler.handle(fake_download)
+
+    def __repr__(self):
+        return "ArchiveHandler"
+
+
+class AlbumHandler:
+
+    def __init__(self):
+        pass
+
+    def can_handle(self, download):
+        biggest_file_paths = download.biggest_files
+        if len(biggest_file_paths) >= 2 and all(map(is_audio_file, biggest_file_paths)):
+            return True
+        return False
+
+    def handle(self, download):
+        album_folder_path = download.folder
+        beet_import(album_folder_path)
+
+    def __repr__(self):
+        return "AlbumHandler"
+
+
 class UnknownHandler:
 
     def __init__(self):
@@ -127,7 +173,9 @@ class HandlerFinder:
         pass
         self._known_handlers = [
             EpisodeHandler(),
-            MovieHandler()
+            MovieHandler(),
+            ArchiveHandler(),
+            AlbumHandler()
         ]
         self._unknown_handler = UnknownHandler()
 
@@ -139,10 +187,13 @@ class HandlerFinder:
 
 
 if __name__ == "__main__":
-    for file_or_folder_path in [Path("/home/adrien/Desktop/The.Orville.S01E03.720p.HDTV.x264-AVS[rarbg]"), Path("/home/adrien/Personal/Media/Videos/Movies/Zero Dark Thirty [2012]"), Path("/home/adrien/Personal/Media/Videos/Movies/Zero Dark Thirty [2012]/Zero.Dark.Thirty.2012.720p.BrRip.x264.BOKUTOX.YIFY.mp4")]:
-        download =  Download(file_or_folder_path)
-        handler_finder = HandlerFinder()
-        handler = handler_finder.find_handler(download)
-        print(handler)
-        handler.handle(download)
-        print("------")
+    archive_file_path = Path.home() / Path("Downloads/www.NewAlbumReleases.net_All_Pigs_Must_Die_-_Hostage_Animal_(2017).rar")
+    print(file_mime_type(archive_file_path))
+
+    #for file_or_folder_path in [Path("/home/adrien/Desktop/The.Orville.S01E03.720p.HDTV.x264-AVS[rarbg]"), Path("/home/adrien/Personal/Media/Videos/Movies/Zero Dark Thirty [2012]"), Path("/home/adrien/Personal/Media/Videos/Movies/Zero Dark Thirty [2012]/Zero.Dark.Thirty.2012.720p.BrRip.x264.BOKUTOX.YIFY.mp4")]:
+    #    download =  Download(file_or_folder_path)
+    #    handler_finder = HandlerFinder()
+    #    handler = handler_finder.find_handler(download)
+    #    print(handler)
+    #    handler.handle(download)
+    #    print("------")

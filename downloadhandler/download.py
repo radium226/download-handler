@@ -22,6 +22,16 @@ class Download:
     def biggest_file(self):
         return first(first(self.group_files_by_size()))
 
+    @property
+    def file_count(self):
+        return 1 if self._file_or_folder_path.is_file() else len(list_files(self._file_or_folder_path, absolute=False))
+
+    @property
+    def folder(self):
+        if self._file_or_folder_path.is_dir():
+            return self._file_or_folder_path
+        return None
+
     def copy_to(self, target_folder_path):
         if self._file_or_folder_path.is_dir():
             folder_path = self._file_or_folder_path
@@ -31,6 +41,9 @@ class Download:
             file_path = self._file_or_folder_path
             copy_file(file_path.parent, file_path.name, target_folder_path)
 
+    @property
+    def biggest_files(self):
+        return first(self.group_files_by_size())
 
     def group_files_by_size(self, percentile_count=5):
         if self._file_or_folder_path.is_dir():

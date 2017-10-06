@@ -16,7 +16,9 @@ setup(
         "halo",
         "guessit",
         "imdbpy",
-        "pathlib2"
+        "pathlib2",
+        "patool",
+        "pyunpack"
     ],
     extra_requires={
         "percentiles": ["numpy"]
