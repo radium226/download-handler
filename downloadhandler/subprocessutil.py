@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 def execute(command, in_folder=None, return_decider=lambda exit_code, output: exit_code == 0):
-    process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=in_folder)
+    process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=str(in_folder) if in_folder else None)
 
     lines = []
     # Poll process for new output until finished

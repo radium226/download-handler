@@ -10,4 +10,4 @@ def subdl(video_file_path):
         "--existing=overwrite",
         "./%s" % video_file_path.name
     ]
-    return execute(command, cwd=str(video_file_path.parent))
+    return execute(command, in_folder=video_file_path.parent)
