@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import shutil
 import numpy as np
@@ -49,49 +49,28 @@ class Download:
         if self._file_or_folder_path.is_dir():
             folder_path = self._file_or_folder_path
             file_paths = list_files(folder_path, absolute=False)
-            file_paths_and_sizes = map(
-                lambda file_path: (file_path, (folder_path / file_path).stat().st_size),
-                file_paths
-            )
+            file_paths_and_sizes = [(file_path, (folder_path / file_path).stat().st_size) for file_path in file_paths]
 
-            file_sizes = np.array(map(
-                lambda file_path_and_size: file_path_and_size[1],
-                file_paths_and_sizes
-            ))
+            file_sizes = np.array([file_path_and_size[1] for file_path_and_size in file_paths_and_sizes])
 
-            size_percentiles = map(
-                lambda percent: np.percentile(file_sizes, percent),
-                range(0, 100 + 1, 100 / percentile_count)
-            )
+            size_percentiles = [np.percentile(file_sizes, percent) for percent in range(0, 100 + 1, int(100 / percentile_count))]
 
             size_ranges = [[size_percentiles[i], size_percentiles[i + 1]] for i in range(0, len(size_percentiles) - 1)]
 
             def size_range_of(size):
-                return first(filter(
-                    lambda size_range: size_range[0] <= size and size <= size_range[1],
-                    size_ranges
-                ))
+                return first([size_range for size_range in size_ranges if size_range[0] <= size and size <= size_range[1]])
 
             file_paths_and_size_ranges = sorted(
-                map(
-                    lambda file_path_and_size: (file_path_and_size[0], size_range_of(file_path_and_size[1])),
-                    file_paths_and_sizes
-                ),
+                [(file_path_and_size[0], size_range_of(file_path_and_size[1])) for file_path_and_size in file_paths_and_sizes],
                 key=lambda file_path_and_size_range: file_path_and_size_range[1],
                 reverse=True
             )
 
-            return map(
-                lambda size_range_and_file_paths: size_range_and_file_paths[1],
-                sorted(
-                    filter(
-                        lambda size_range_and_file_paths: len(size_range_and_file_paths[1]) > 0,
-                        [(size_range, [file_path_and_size_range[0] for file_path_and_size_range in file_paths_and_size_ranges if file_path_and_size_range[1] == size_range]) for size_range in size_ranges]
-                    ),
+            return [size_range_and_file_paths[1] for size_range_and_file_paths in sorted(
+                    [size_range_and_file_paths for size_range_and_file_paths in [(size_range, [file_path_and_size_range[0] for file_path_and_size_range in file_paths_and_size_ranges if file_path_and_size_range[1] == size_range]) for size_range in size_ranges] if len(size_range_and_file_paths[1]) > 0],
                     key=lambda size_range_and_file_paths: size_range_and_file_paths[0][0],
                     reverse=True
-                )
-            )
+                )]
         else:
             file_path = self._file_or_folder_path
             return [[file_path]]

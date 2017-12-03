@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo -H pip2 install --ignore-installed "$( pwd )"
+sudo -H pip3 install --ignore-installed "$( pwd )"

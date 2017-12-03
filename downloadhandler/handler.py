@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from guessit import guessit
 from pathlib2 import Path
@@ -7,11 +7,13 @@ from tempfile import mkdtemp
 from pyunpack import Archive
 
 from .listutil import first
-from .pathutil import file_mime_type, is_video_file, is_audio_file, locate_file_by_name, folder_emblems
+from .pathutil import adjust_path, file_mime_type, is_video_file, is_audio_file, locate_file_by_name, folder_emblems
 
 from .download import Download
 from .subdl import subdl
-from .beet import beet_import
+from .beet import beet_import, BeetImportError
+
+import shutil
 
 def single_video(download):
     biggest_file_paths = first(download.group_files_by_size())
@@ -20,7 +22,6 @@ def single_video(download):
         if is_video_file(biggest_file_path): # If the file is a video
             return biggest_file_path
     return None
-
 
 class EpisodeHandler:
 
@@ -42,11 +43,14 @@ class EpisodeHandler:
         episode = guess["episode"]
 
         imdb = IMDb()
-        tv_series = first(filter(lambda movie: movie["kind"] == "tv series", imdb.search_movie(title)))
+        tv_series = first([movie for movie in imdb.search_movie(title) if movie["kind"] == "tv series"])
         imdb.update(tv_series)
         years = tv_series["series years"]
 
-        target_folder_path = self._tv_series_folder_path / Path("%s [%s]" % (title, years)) / Path("Se%02d" % season) / Path("Ep%02d" % episode)
+        title_path_name = "%s [%s]" % (title, years)
+
+
+        target_folder_path = adjust_path(self._tv_series_folder_path / Path(title_path_name) / Path("Se%02d" % season) / Path("Ep%02d" % episode))
         target_folder_path.mkdir(exist_ok=True, parents=True)
 
         return target_folder_path
@@ -89,7 +93,7 @@ class MovieHandler:
         title = guess["title"]
 
         imdb = IMDb()
-        movie = first(filter(lambda movie: movie["kind"] == "movie", imdb.search_movie(title)))
+        movie = first([movie for movie in imdb.search_movie(title) if movie["kind"] == "movie"])
         year = movie["year"]
 
         target_folder_path = self._movie_folder_path / Path("%s [%s]" % (title, year))
@@ -117,7 +121,8 @@ class ArchiveHandler:
         if download.file_count == 1:
             file_path = download.biggest_file
             _, secondary_mime_type = file_mime_type(file_path)
-            if secondary_mime_type == "x-rar-compressed":
+            print(secondary_mime_type)
+            if secondary_mime_type in ["x-rar-compressed", "vnd.rar"]:
                 return True
         return False
 
@@ -146,15 +151,17 @@ class AlbumHandler:
 
     def handle(self, download):
         album_folder_path = download.folder
-        beet_import(album_folder_path)
+        try:
+            beet_import(album_folder_path)
+        except BeetImportError as e:
+            shutil.move(str(album_folder_path), "/home/adrien/Personal/Media/Music/To Sort")
 
     def __repr__(self):
         return "AlbumHandler"
 
 
 class UnknownHandlerError(Exception):
-    def __init__(self):
-        super(BeetImportError, self).__init__()
+    pass
 
 
 class UnknownHandler:
@@ -193,7 +200,7 @@ class HandlerFinder:
 
 if __name__ == "__main__":
     archive_file_path = Path.home() / Path("Downloads/www.NewAlbumReleases.net_All_Pigs_Must_Die_-_Hostage_Animal_(2017).rar")
-    print(file_mime_type(archive_file_path))
+    print((file_mime_type(archive_file_path)))
 
     #for file_or_folder_path in [Path("/home/adrien/Desktop/The.Orville.S01E03.720p.HDTV.x264-AVS[rarbg]"), Path("/home/adrien/Personal/Media/Videos/Movies/Zero Dark Thirty [2012]"), Path("/home/adrien/Personal/Media/Videos/Movies/Zero Dark Thirty [2012]/Zero.Dark.Thirty.2012.720p.BrRip.x264.BOKUTOX.YIFY.mp4")]:
     #    download =  Download(file_or_folder_path)

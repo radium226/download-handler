@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from setuptools import setup
 from glob import glob
@@ -18,7 +18,8 @@ setup(
         "imdbpy",
         "pathlib2",
         "patool",
-        "pyunpack"
+        "pyunpack",
+        "fuzzywuzzy"
     ],
     extra_requires={
         "percentiles": ["numpy"]
