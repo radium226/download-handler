@@ -16,6 +16,7 @@ from .beet import beet_import, BeetImportError
 import shutil
 
 def single_video(download):
+    print(" --> %s" % download.group_files_by_size())
     biggest_file_paths = first(download.group_files_by_size())
     if len(biggest_file_paths) == 1: # If there is only one file in the group containing the biggest files
         biggest_file_path = first(biggest_file_paths)
@@ -30,6 +31,7 @@ class EpisodeHandler:
 
     def can_handle(self, download):
         video_file_path = single_video(download)
+        print("video_file_path=%s" % video_file_path)
         if video_file_path:
             video_file_name = video_file_path.name
             guess = guessit(video_file_name)
@@ -45,10 +47,15 @@ class EpisodeHandler:
         imdb = IMDb()
         tv_series = first([movie for movie in imdb.search_movie(title) if movie["kind"] == "tv series"])
         imdb.update(tv_series)
-        years = tv_series["series years"]
+
+        try:
+            years = tv_series["series years"]
+        except:
+            years = "%s-" % tv_series["year"]
+
+        title = tv_series["title"]
 
         title_path_name = "%s [%s]" % (title, years)
-
 
         target_folder_path = adjust_path(self._tv_series_folder_path / Path(title_path_name) / Path("Se%02d" % season) / Path("Ep%02d" % episode))
         target_folder_path.mkdir(exist_ok=True, parents=True)

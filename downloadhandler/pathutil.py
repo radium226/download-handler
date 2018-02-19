@@ -52,6 +52,9 @@ def folder_emblems(folder_path):
 
 def file_mime_type(file_path):
     mime_type, _ = mimetypes.guess_type(str(file_path))
+    if not mime_type:
+        return (None, None)
+    print("file_path%s,mime_type=%s" % (str(file_path), str(mime_type)))
     primary_and_secondary_mime_types = mime_type.split("/")
     primary_mime_type = primary_and_secondary_mime_types[0]
     secondary_mime_type = primary_and_secondary_mime_types[1]
