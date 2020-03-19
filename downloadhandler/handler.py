@@ -100,8 +100,14 @@ class MovieHandler:
         title = guess["title"]
 
         imdb = IMDb()
-        movie = first([movie for movie in imdb.search_movie(title) if movie["kind"] == "movie"])
-        year = movie["year"]
+        print(title)
+        print(imdb.search_movie(title))
+        movies = [movie for movie in imdb.search_movie(title) if movie["kind"] == "movie"]
+        if len(movies) > 0:
+            movie = first(movies)
+            year = movie["year"]
+        else:
+            year = guess["year"]
 
         target_folder_path = self._movie_folder_path / Path("%s [%s]" % (title, year))
         target_folder_path.mkdir(exist_ok=True, parents=True)
